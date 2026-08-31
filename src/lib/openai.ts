@@ -30,7 +30,23 @@ export const REQUEST_TUNING = {
   store: false,
 };
 
-export const openai = new OpenAI();
+/**
+ * Construction paresseuse, et surtout pas au chargement du module.
+ *
+ * Le SDK lève « Missing credentials » dès `new OpenAI()` si aucune clé ne se
+ * résout. Or Next évalue les modules de route au build pour en collecter la
+ * configuration (`runtime`, `maxDuration`) : un client construit au niveau du
+ * module fait donc échouer le build partout où la clé n'est pas présente à ce
+ * moment-là — ce qui est le cas sur Vercel. En différant la construction au
+ * premier appel, une clé absente redevient une erreur d'exécution lisible,
+ * gérée par `openaiApiKey()`.
+ */
+let client: OpenAI | null = null;
+
+function getClient(): OpenAI {
+  client ??= new OpenAI();
+  return client;
+}
 
 export type TurnInput = Array<{ role: "user" | "assistant"; content: string }>;
 
@@ -46,7 +62,7 @@ export async function streamTurn(options: {
 }): Promise<{ text: string; errorMessage: string | null }> {
   let text = "";
 
-  const events = await openai.responses.create(
+  const events = await getClient().responses.create(
     {
       model: MODEL,
       instructions: options.instructions,
