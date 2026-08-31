@@ -56,6 +56,17 @@ export async function updateSession(request: NextRequest) {
     );
   }
 
+  // Quand l'URL de callback n'est pas dans les « Redirect URLs » autorisées,
+  // Supabase ignore `emailRedirectTo` et retombe sur la Site URL : le code
+  // d'échange atterrit alors sur une page qui ne sait pas quoi en faire, et la
+  // connexion échoue en silence. On le réachemine plutôt que de le perdre.
+  const code = request.nextUrl.searchParams.get("code");
+  if (code && request.nextUrl.pathname !== "/auth/callback") {
+    const callback = request.nextUrl.clone();
+    callback.pathname = "/auth/callback";
+    return NextResponse.redirect(callback);
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(url, anonKey, {
