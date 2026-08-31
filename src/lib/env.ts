@@ -22,7 +22,7 @@ export function supabaseUrl(): string {
 
   if (!value) {
     throw new Error(
-      `NEXT_PUBLIC_SUPABASE_URL est absent de .env.local.\n${WHERE_URL}`,
+      `NEXT_PUBLIC_SUPABASE_URL est absent de la configuration (.env.local en local, Environment Variables sur Vercel).\n${WHERE_URL}`,
     );
   }
 
@@ -58,7 +58,7 @@ export function openaiApiKey(): string {
 
   if (!value) {
     throw new Error(
-      "OPENAI_API_KEY est absent de .env.local.\n" +
+      "OPENAI_API_KEY est absent de la configuration (.env.local en local, Environment Variables sur Vercel).\n" +
         "platform.openai.com → API keys → Create new secret key, " +
         "puis redémarre le serveur.",
     );
@@ -88,7 +88,7 @@ export function supabaseAnonKey(): string {
 
   if (!value) {
     throw new Error(
-      `NEXT_PUBLIC_SUPABASE_ANON_KEY est absent de .env.local.\n${WHERE_KEY}`,
+      `NEXT_PUBLIC_SUPABASE_ANON_KEY est absent de la configuration (.env.local en local, Environment Variables sur Vercel).\n${WHERE_KEY}`,
     );
   }
 
