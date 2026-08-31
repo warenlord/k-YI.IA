@@ -19,9 +19,28 @@ function isPublic(pathname: string) {
  * à laquelle on recopie les cookies), sinon la session se désynchronise.
  */
 export async function updateSession(request: NextRequest) {
+  // Une variable absente ferait échouer le proxy sur chaque requête, donc une
+  // 500 opaque sur tout le site — y compris les pages publiques. On préfère
+  // nommer la variable fautive : le message ne contient aucun secret, et sans
+  // ça le diagnostic exige l'accès aux logs de l'hébergeur.
+  let url: string;
+  let anonKey: string;
+  try {
+    url = supabaseUrl();
+    anonKey = supabaseAnonKey();
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Configuration incomplète.";
+    console.error("[proxy] configuration", message);
+    return new NextResponse(`Configuration incomplète.\n\n${message}\n`, {
+      status: 503,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(supabaseUrl(), supabaseAnonKey(), {
+  const supabase = createServerClient(url, anonKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
