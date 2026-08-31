@@ -32,10 +32,28 @@ export async function updateSession(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : "Configuration incomplète.";
     console.error("[proxy] configuration", message);
-    return new NextResponse(`Configuration incomplète.\n\n${message}\n`, {
-      status: 503,
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
-    });
+
+    // Distingue « variable absente » de « variable mal nommée ». Seuls les NOMS
+    // sont listés, jamais les valeurs — et les NEXT_PUBLIC_* finissent de toute
+    // façon dans le bundle du navigateur.
+    const visible = Object.keys(process.env)
+      .filter((name) => name.startsWith("NEXT_PUBLIC_"))
+      .sort();
+
+    const inventory =
+      visible.length > 0
+        ? `Variables NEXT_PUBLIC_* visibles par ce déploiement :\n${visible
+            .map((name) => `  - ${name}`)
+            .join("\n")}`
+        : "Aucune variable NEXT_PUBLIC_* n'est visible par ce déploiement.";
+
+    return new NextResponse(
+      `Configuration incomplète.\n\n${message}\n\n${inventory}\n`,
+      {
+        status: 503,
+        headers: { "Content-Type": "text/plain; charset=utf-8" },
+      },
+    );
   }
 
   let supabaseResponse = NextResponse.next({ request });
